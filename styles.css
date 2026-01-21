@@ -52,6 +52,19 @@ body {
   justify-content: space-between;
 }
 
+.auth {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.auth__name {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .calendar__title {
   text-align: center;
 }
@@ -147,7 +160,9 @@ body {
 }
 
 .calendar__day--selected {
-  outline: 2px solid var(--primary);
+  background: #f59e0b;
+  color: #1f2937;
+  outline: 2px solid rgba(245, 158, 11, 0.5);
   outline-offset: -4px;
 }
 

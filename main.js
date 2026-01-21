@@ -1,3 +1,38 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import {
+  addDoc,
+  collection,
+  doc,
+  getFirestore,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAuNVBeAdy-OaZ3LVsGsXYg5RTrFt688Cc",
+  authDomain: "calendar-c745b.firebaseapp.com",
+  projectId: "calendar-c745b",
+  storageBucket: "calendar-c745b.firebasestorage.app",
+  messagingSenderId: "890163940632",
+  appId: "1:890163940632:web:19511a5bd362838300a26d",
+  measurementId: "G-L6TEDLXKN0",
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
+
 const monthFormatter = new Intl.DateTimeFormat('en', { month: 'long' });
 const dayFormatter = new Intl.DateTimeFormat('en', { day: 'numeric' });
 const fullDateFormatter = new Intl.DateTimeFormat('en', {
@@ -26,6 +61,9 @@ const DOM = {
   calendarStart: document.getElementById('calendar-start'),
   calendarEnd: document.getElementById('calendar-end'),
   calendarLabel: document.getElementById('calendar-label'),
+  authLogin: document.getElementById('auth-login'),
+  authLogout: document.getElementById('auth-logout'),
+  userName: document.getElementById('user-name'),
   taskToggle: document.getElementById('task-toggle'),
   taskPanel: document.getElementById('task-panel'),
   taskList: document.getElementById('task-list'),
@@ -39,9 +77,24 @@ const state = {
   events: {},
   dayViewVisible: false,
   taskPanelVisible: false,
+  currentUser: null,
 };
 
 let eventCounter = 0;
+let unsubscribeEvents = null;
+
+function setAuthUI(user) {
+  if (!DOM.userName || !DOM.authLogin || !DOM.authLogout) return;
+  if (user) {
+    DOM.userName.textContent = user.displayName || user.email || 'Logged in';
+    DOM.authLogin.hidden = true;
+    DOM.authLogout.hidden = false;
+  } else {
+    DOM.userName.textContent = 'Guest';
+    DOM.authLogin.hidden = false;
+    DOM.authLogout.hidden = true;
+  }
+}
 
 function setView(date) {
   state.viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -211,6 +264,48 @@ function formatTaskDate(key) {
   return key.replace(/-/g, '/');
 }
 
+function startEventListener(user) {
+  if (unsubscribeEvents) {
+    unsubscribeEvents();
+    unsubscribeEvents = null;
+  }
+
+  if (!user) {
+    state.events = {};
+    render();
+    renderTaskList();
+    return;
+  }
+
+  const eventsQuery = query(
+    collection(db, 'events'),
+    where('userId', '==', user.uid),
+  );
+
+  unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
+    state.events = {};
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const dateKey = data.dateKey;
+      if (!state.events[dateKey]) state.events[dateKey] = [];
+      state.events[dateKey].push({
+        id: docSnap.id,
+        startMinutes: data.startMinutes,
+        endMinutes: data.endMinutes,
+        label: data.label,
+        completed: Boolean(data.completed),
+      });
+    });
+
+    Object.keys(state.events).forEach((key) => {
+      state.events[key].sort((a, b) => a.startMinutes - b.startMinutes);
+    });
+
+    render();
+    renderTaskList();
+  });
+}
+
 function getDateKey(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -245,8 +340,21 @@ function addEventToState(date, event) {
   renderTaskList();
 }
 
-function addEventAndReveal(date, event) {
-  addEventToState(date, event);
+async function addEventAndReveal(date, event) {
+  if (!state.currentUser) {
+    alert('請先登入');
+    return;
+  }
+  const dateKey = getDateKey(date);
+  await addDoc(collection(db, 'events'), {
+    userId: state.currentUser.uid,
+    dateKey,
+    startMinutes: event.startMinutes,
+    endMinutes: event.endMinutes,
+    label: event.label,
+    completed: Boolean(event.completed),
+    createdAt: serverTimestamp(),
+  });
   if (!state.selectedDate || !isSameDay(date, state.selectedDate)) {
     focusDate(date);
     return;
@@ -329,9 +437,8 @@ function toggleEventCompletion(dateKey, eventId) {
   if (!events) return;
   const target = events.find((event) => event.id === eventId);
   if (!target) return;
-  target.completed = !target.completed;
-  renderDayView();
-  renderTaskList();
+  if (!state.currentUser) return;
+  updateDoc(doc(db, 'events', eventId), { completed: !target.completed });
 }
 
 function renderTaskList() {
@@ -401,7 +508,7 @@ function renderTaskList() {
   });
 }
 
-function handleDayFormSubmit(event) {
+async function handleDayFormSubmit(event) {
   event.preventDefault();
   if (!DOM.dayStart || !DOM.dayEnd || !DOM.dayLabel) return;
   if (!state.selectedDate) {
@@ -422,7 +529,7 @@ function handleDayFormSubmit(event) {
     return;
   }
 
-  addEventAndReveal(new Date(state.selectedDate), {
+  await addEventAndReveal(new Date(state.selectedDate), {
     startMinutes,
     endMinutes,
     label,
@@ -430,7 +537,7 @@ function handleDayFormSubmit(event) {
   DOM.dayLabel.value = '';
 }
 
-function handleQuickFormSubmit(event) {
+async function handleQuickFormSubmit(event) {
   event.preventDefault();
   if (!DOM.calendarDate || !DOM.calendarStart || !DOM.calendarEnd || !DOM.calendarLabel) return;
   const dateValue = DOM.calendarDate.value;
@@ -457,7 +564,7 @@ function handleQuickFormSubmit(event) {
     return;
   }
 
-  addEventAndReveal(date, {
+  await addEventAndReveal(date, {
     startMinutes,
     endMinutes,
     label,
@@ -528,6 +635,28 @@ if (DOM.taskToggle) {
 if (DOM.taskClose) {
   DOM.taskClose.addEventListener('click', hideTaskPanel);
 }
+
+if (DOM.authLogin) {
+  DOM.authLogin.addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      alert('登入失敗，請稍後再試');
+    }
+  });
+}
+
+if (DOM.authLogout) {
+  DOM.authLogout.addEventListener('click', async () => {
+    await signOut(auth);
+  });
+}
+
+onAuthStateChanged(auth, (user) => {
+  state.currentUser = user;
+  setAuthUI(user);
+  startEventListener(user);
+});
 
 setView(new Date());
 renderTaskList();
