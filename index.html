@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="calendar">
+        <header class="calendar__header">
+          <div class="calendar__nav">
+            <button class="calendar__btn" data-action="prev" aria-label="Previous month">&#8249;</button>
+            <div class="calendar__title">
+              <h1 id="calendar-month"></h1>
+              <p id="calendar-year"></p>
+            </div>
+            <button class="calendar__btn" data-action="next" aria-label="Next month">&#8250;</button>
+          </div>
+          <button class="calendar__btn calendar__btn--today" data-action="today">Today</button>
+        </header>
+        <div class="calendar__grid" role="grid" aria-labelledby="calendar-month">
+          <div class="calendar__weekday" aria-hidden="true">Sun</div>
+          <div class="calendar__weekday" aria-hidden="true">Mon</div>
+          <div class="calendar__weekday" aria-hidden="true">Tue</div>
+          <div class="calendar__weekday" aria-hidden="true">Wed</div>
+          <div class="calendar__weekday" aria-hidden="true">Thu</div>
+          <div class="calendar__weekday" aria-hidden="true">Fri</div>
+          <div class="calendar__weekday" aria-hidden="true">Sat</div>
+          <div id="calendar-days" class="calendar__days"></div>
+        </div>
+      </section>
+    </main>
+    <script src="main.js" type="module"></script>
+  </body>
+</html>
