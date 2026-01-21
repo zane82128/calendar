@@ -247,6 +247,7 @@ body {
   top: calc(var(--hour-row-height, 3rem) * var(--offset, 0));
   z-index: var(--z-index, 1);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .day-view__event-text {
@@ -261,7 +262,9 @@ body {
 }
 
 .day-view__event--completed {
-  opacity: 0.6;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
 }
 
 .day-view__event--completed .day-view__event-text span:last-child {
