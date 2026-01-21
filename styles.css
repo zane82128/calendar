@@ -87,16 +87,20 @@ body {
 
 .calendar__grid {
   margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  row-gap: 0.5rem;
 }
 
-.calendar__weekday {
+.calendar__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.calendar__weekdays span {
   font-size: 0.85rem;
   text-align: center;
   color: var(--text-muted);
-  padding: 0.5rem 0;
+  padding: 0.35rem 0;
   font-weight: 600;
 }
 
@@ -104,7 +108,6 @@ body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.35rem;
-  grid-column: 1 / -1;
 }
 
 .calendar__day {

@@ -20,15 +20,17 @@
           </div>
           <button class="calendar__btn calendar__btn--today" data-action="today">Today</button>
         </header>
-        <div class="calendar__grid" role="grid" aria-labelledby="calendar-month">
-          <div class="calendar__weekday" aria-hidden="true">Sun</div>
-          <div class="calendar__weekday" aria-hidden="true">Mon</div>
-          <div class="calendar__weekday" aria-hidden="true">Tue</div>
-          <div class="calendar__weekday" aria-hidden="true">Wed</div>
-          <div class="calendar__weekday" aria-hidden="true">Thu</div>
-          <div class="calendar__weekday" aria-hidden="true">Fri</div>
-          <div class="calendar__weekday" aria-hidden="true">Sat</div>
-          <div id="calendar-days" class="calendar__days"></div>
+        <div class="calendar__grid">
+          <div class="calendar__weekdays" aria-hidden="true">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
+          <div id="calendar-days" class="calendar__days" role="grid" aria-labelledby="calendar-month"></div>
         </div>
       </section>
     </main>
