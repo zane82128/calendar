@@ -33,6 +33,16 @@
           <div id="calendar-days" class="calendar__days" role="grid" aria-labelledby="calendar-month"></div>
         </div>
       </section>
+      <section class="day-view" aria-live="polite">
+        <header class="day-view__header">
+          <p class="day-view__label">Selected date</p>
+          <h2 id="selected-date"></h2>
+          <p id="selected-weekday" class="day-view__weekday"></p>
+        </header>
+        <div class="day-view__hours" id="day-hours" role="list">
+          <!-- Hours will be populated by JS -->
+        </div>
+      </section>
     </main>
     <script src="main.js" type="module"></script>
   </body>

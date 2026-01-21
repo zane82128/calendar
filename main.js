@@ -1,19 +1,33 @@
 const monthFormatter = new Intl.DateTimeFormat('en', { month: 'long' });
 const dayFormatter = new Intl.DateTimeFormat('en', { day: 'numeric' });
+const fullDateFormatter = new Intl.DateTimeFormat('en', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+});
+const weekdayFormatter = new Intl.DateTimeFormat('en', { weekday: 'long' });
+const HOURS = Array.from({ length: 25 }, (_, hour) => `${String(hour).padStart(2, '0')}:00`);
 
 const DOM = {
   month: document.getElementById('calendar-month'),
   year: document.getElementById('calendar-year'),
   days: document.getElementById('calendar-days'),
   buttons: document.querySelectorAll('.calendar__btn'),
+  selectedDate: document.getElementById('selected-date'),
+  selectedWeekday: document.getElementById('selected-weekday'),
+  dayHours: document.getElementById('day-hours'),
 };
 
 const state = {
   viewDate: new Date(),
+  selectedDate: new Date(),
 };
 
 function setView(date) {
   state.viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+  if (!state.selectedDate || !isSameMonth(state.selectedDate, state.viewDate)) {
+    state.selectedDate = new Date(state.viewDate);
+  }
   render();
 }
 
@@ -55,6 +69,50 @@ function buildCalendarDates(baseDate) {
   return dates;
 }
 
+function isSameDay(dateA, dateB) {
+  return (
+    dateA.getFullYear() === dateB.getFullYear()
+    && dateA.getMonth() === dateB.getMonth()
+    && dateA.getDate() === dateB.getDate()
+  );
+}
+
+function isSameMonth(dateA, dateB) {
+  return dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth();
+}
+
+function setSelectedDate(date, { reRender = true } = {}) {
+  state.selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  if (reRender) render();
+}
+
+function handleDaySelection(date, outside) {
+  if (outside) {
+    state.viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    setSelectedDate(date, { reRender: false });
+    render();
+    return;
+  }
+
+  setSelectedDate(date);
+}
+
+function buildHourList() {
+  DOM.dayHours.innerHTML = '';
+  HOURS.forEach((label) => {
+    const hourEl = document.createElement('div');
+    hourEl.className = 'day-view__hour';
+    hourEl.textContent = label;
+    DOM.dayHours.appendChild(hourEl);
+  });
+}
+
+function updateDayView() {
+  if (!state.selectedDate) return;
+  DOM.selectedDate.textContent = fullDateFormatter.format(state.selectedDate);
+  DOM.selectedWeekday.textContent = weekdayFormatter.format(state.selectedDate);
+}
+
 function render() {
   const { viewDate } = state;
   DOM.month.textContent = monthFormatter.format(viewDate);
@@ -76,8 +134,18 @@ function render() {
     dayElement.textContent = dayFormatter.format(date);
     dayElement.type = 'button';
     dayElement.title = date.toDateString();
+    dayElement.dataset.date = date.toISOString();
+    if (outside) dayElement.dataset.outside = 'true';
+
+    if (state.selectedDate && isSameDay(date, state.selectedDate)) {
+      dayElement.classList.add('calendar__day--selected');
+    }
+
+    dayElement.addEventListener('click', () => handleDaySelection(date, outside));
     DOM.days.appendChild(dayElement);
   });
+
+  updateDayView();
 }
 
 DOM.buttons.forEach((button) => {
@@ -89,4 +157,5 @@ DOM.buttons.forEach((button) => {
   });
 });
 
+buildHourList();
 setView(new Date());
