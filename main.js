@@ -64,6 +64,8 @@ const DOM = {
   authLogin: document.getElementById('auth-login'),
   authLogout: document.getElementById('auth-logout'),
   userName: document.getElementById('user-name'),
+  authGate: document.getElementById('auth-gate'),
+  appRoot: document.getElementById('app-root'),
   taskToggle: document.getElementById('task-toggle'),
   taskPanel: document.getElementById('task-panel'),
   taskList: document.getElementById('task-list'),
@@ -84,14 +86,16 @@ let eventCounter = 0;
 let unsubscribeEvents = null;
 
 function setAuthUI(user) {
-  if (!DOM.userName || !DOM.authLogin || !DOM.authLogout) return;
+  if (!DOM.userName || !DOM.authLogin || !DOM.authLogout || !DOM.authGate || !DOM.appRoot) return;
   if (user) {
     DOM.userName.textContent = user.displayName || user.email || 'Logged in';
-    DOM.authLogin.hidden = true;
+    DOM.authGate.hidden = true;
+    DOM.appRoot.classList.remove('app--hidden');
     DOM.authLogout.hidden = false;
   } else {
     DOM.userName.textContent = 'Guest';
-    DOM.authLogin.hidden = false;
+    DOM.authGate.hidden = false;
+    DOM.appRoot.classList.add('app--hidden');
     DOM.authLogout.hidden = true;
   }
 }
