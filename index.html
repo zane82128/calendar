@@ -19,6 +19,7 @@
             <button class="calendar__btn" data-action="next" aria-label="Next month">&#8250;</button>
           </div>
           <button class="calendar__btn calendar__btn--today" data-action="today">Today</button>
+          <button class="calendar__btn calendar__btn--task" type="button" id="task-toggle">Task List</button>
         </header>
         <div class="calendar__grid">
           <div class="calendar__weekdays" aria-hidden="true">
@@ -32,13 +33,78 @@
           </div>
           <div id="calendar-days" class="calendar__days" role="grid" aria-labelledby="calendar-month"></div>
         </div>
+        <form class="day-form calendar-form" id="calendar-form">
+          <label class="day-form__label" for="calendar-date">快速新增跨日行程</label>
+          <div class="day-form__controls">
+            <input
+              id="calendar-date"
+              type="date"
+              class="day-form__input"
+              required
+            />
+          </div>
+          <div class="day-form__controls day-form__controls--split">
+            <div class="day-form__select">
+              <span class="day-form__select-label">開始</span>
+              <select id="calendar-start" class="day-form__time-select"></select>
+            </div>
+            <span class="day-form__tilde">~</span>
+            <div class="day-form__select">
+              <span class="day-form__select-label">結束</span>
+              <select id="calendar-end" class="day-form__time-select"></select>
+            </div>
+          </div>
+          <div class="day-form__controls">
+            <input
+              id="calendar-label"
+              type="text"
+              class="day-form__input"
+              placeholder="行程名稱，例如：健身房"
+              autocomplete="off"
+              required
+            />
+            <button type="submit" class="day-form__submit">Add</button>
+          </div>
+        </form>
+        <section class="task-panel" id="task-panel" hidden aria-live="polite">
+          <header class="task-panel__header">
+            <p class="task-panel__title">Task List</p>
+            <button type="button" class="task-panel__close" id="task-close" aria-label="Close task list">&#10005;</button>
+          </header>
+          <div class="task-panel__list" id="task-list" role="list"></div>
+        </section>
       </section>
-      <section class="day-view" aria-live="polite">
+      <section class="day-view" aria-live="polite" hidden>
         <header class="day-view__header">
           <p class="day-view__label">Selected date</p>
           <h2 id="selected-date"></h2>
           <p id="selected-weekday" class="day-view__weekday"></p>
         </header>
+        <form class="day-form" id="day-form">
+          <label class="day-form__label" for="day-label">新增行程</label>
+          <div class="day-form__controls day-form__controls--split">
+            <div class="day-form__select">
+              <span class="day-form__select-label">開始</span>
+              <select id="day-start" class="day-form__time-select"></select>
+            </div>
+            <span class="day-form__tilde">~</span>
+            <div class="day-form__select">
+              <span class="day-form__select-label">結束</span>
+              <select id="day-end" class="day-form__time-select"></select>
+            </div>
+          </div>
+          <div class="day-form__controls">
+            <input
+              id="day-label"
+              type="text"
+              class="day-form__input"
+              placeholder="行程名稱，例如：健身房"
+              autocomplete="off"
+              required
+            />
+            <button type="submit" class="day-form__submit">Add</button>
+          </div>
+        </form>
         <div class="day-view__hours" id="day-hours" role="list">
           <!-- Hours will be populated by JS -->
         </div>
