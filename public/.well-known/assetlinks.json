@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.web.calendar_c745b.twa",
+      "sha256_cert_fingerprints": [
+        "63:37:55:3F:CC:5D:3D:0A:A4:B1:F4:F4:53:72:5C:EE:0F:B8:4E:77:32:80:B8:4D:1D:CF:D3:52:F5:90:7F:21"
+      ]
+    }
+  }
+]
