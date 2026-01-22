@@ -86,8 +86,9 @@ const state = {
 let eventCounter = 0;
 let unsubscribeEvents = null;
 let deferredInstallPrompt = null;
-let isAppInstalled = window.matchMedia('(display-mode: standalone)').matches
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches
   || window.navigator.standalone === true;
+let isAppInstalled = isStandalone();
 
 function setAuthUI(user) {
   if (!DOM.userName || !DOM.authLogin || !DOM.authLogout || !DOM.authGate || !DOM.appRoot) return;
@@ -662,6 +663,13 @@ if (DOM.authLogout) {
 
 if (DOM.installBtn) {
   DOM.installBtn.addEventListener('click', async () => {
+    if (isStandalone()) {
+      isAppInstalled = true;
+    } else if (navigator.getInstalledRelatedApps) {
+      const related = await navigator.getInstalledRelatedApps();
+      isAppInstalled = related.length > 0;
+    }
+
     if (isAppInstalled) {
       alert('You already installed this app.');
       return;
