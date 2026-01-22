@@ -35,27 +35,12 @@ const googleProvider = new GoogleAuthProvider();
 
 const monthFormatter = new Intl.DateTimeFormat('en', { month: 'long' });
 const dayFormatter = new Intl.DateTimeFormat('en', { day: 'numeric' });
-const fullDateFormatter = new Intl.DateTimeFormat('en', {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-});
-const weekdayFormatter = new Intl.DateTimeFormat('en', { weekday: 'long' });
 const TIME_STEP_MINUTES = 30;
-const HOUR_MINUTES = Array.from({ length: 24 }, (_, hour) => hour * 60);
-
 const DOM = {
   month: document.getElementById('calendar-month'),
   year: document.getElementById('calendar-year'),
   days: document.getElementById('calendar-days'),
   buttons: document.querySelectorAll('.calendar__btn'),
-  selectedDate: document.getElementById('selected-date'),
-  selectedWeekday: document.getElementById('selected-weekday'),
-  dayHours: document.getElementById('day-hours'),
-  dayForm: document.getElementById('day-form'),
-  dayStart: document.getElementById('day-start'),
-  dayEnd: document.getElementById('day-end'),
-  dayLabel: document.getElementById('day-label'),
   calendarForm: document.getElementById('calendar-form'),
   calendarDate: document.getElementById('calendar-date'),
   calendarStart: document.getElementById('calendar-start'),
@@ -71,14 +56,12 @@ const DOM = {
   taskPanel: document.getElementById('task-panel'),
   taskList: document.getElementById('task-list'),
   taskClose: document.getElementById('task-close'),
-  dayView: document.querySelector('.day-view'),
 };
 
 const state = {
   viewDate: new Date(),
   selectedDate: new Date(),
   events: {},
-  dayViewVisible: false,
   taskPanelVisible: false,
   currentUser: null,
 };
@@ -166,16 +149,6 @@ function isSameMonth(dateA, dateB) {
   return dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth();
 }
 
-function showDayView() {
-  state.dayViewVisible = true;
-  DOM.dayView?.removeAttribute('hidden');
-}
-
-function hideDayView() {
-  state.dayViewVisible = false;
-  DOM.dayView?.setAttribute('hidden', '');
-}
-
 function showTaskPanel() {
   state.taskPanelVisible = true;
   DOM.taskPanel?.removeAttribute('hidden');
@@ -200,7 +173,6 @@ function focusDate(date, { reRender = true } = {}) {
 function setSelectedDate(date, { reRender = true } = {}) {
   state.selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   syncQuickFormDate(state.selectedDate);
-  showDayView();
   if (reRender) render();
 }
 
@@ -209,13 +181,6 @@ function handleDaySelection(date, outside) {
     focusDate(date);
     return;
   }
-
-  if (state.dayViewVisible && state.selectedDate && isSameDay(date, state.selectedDate)) {
-    hideDayView();
-    renderDayView();
-    return;
-  }
-
   setSelectedDate(date);
 }
 
@@ -366,79 +331,9 @@ async function addEventAndReveal(date, event) {
   });
   if (!state.selectedDate || !isSameDay(date, state.selectedDate)) {
     focusDate(date);
-    return;
+  } else {
+    render();
   }
-  showDayView();
-  renderDayView();
-}
-
-function renderDayView() {
-  if (!state.selectedDate || !state.dayViewVisible) return;
-  if (DOM.dayView?.hasAttribute('hidden')) return;
-  DOM.selectedDate.textContent = fullDateFormatter.format(state.selectedDate);
-  DOM.selectedWeekday.textContent = weekdayFormatter.format(state.selectedDate);
-
-  DOM.dayHours.innerHTML = '';
-  const key = getDateKey(state.selectedDate);
-  const events = state.events[key] ?? [];
-
-  HOUR_MINUTES.forEach((slotMinutes, slotIndex) => {
-    const hourEl = document.createElement('div');
-    hourEl.className = 'day-view__hour';
-
-    const labelEl = document.createElement('span');
-    labelEl.className = 'day-view__hour-label';
-    labelEl.textContent = formatTime(slotMinutes);
-
-    const blockContainer = document.createElement('div');
-    blockContainer.className = 'day-view__hour-blocks';
-
-    events.forEach((event) => {
-      if (typeof event.completed !== 'boolean') event.completed = false;
-      const eventSlotIndex = Math.floor(event.startMinutes / 60);
-      if (eventSlotIndex === slotIndex) {
-        const block = document.createElement('div');
-        block.className = 'day-view__event';
-        if (event.completed) block.classList.add('day-view__event--completed');
-        const durationHours = (event.endMinutes - event.startMinutes) / 60;
-        block.style.setProperty('--duration', Math.max(durationHours, TIME_STEP_MINUTES / 60));
-        const offsetRatio = (event.startMinutes % 60) / 60;
-        block.style.setProperty('--offset', offsetRatio);
-        const zIndex = 1000 - (event.endMinutes - event.startMinutes);
-        block.style.setProperty('--z-index', zIndex);
-        block.style.zIndex = zIndex;
-
-        const check = document.createElement('button');
-        check.className = 'event-check';
-        if (event.completed) {
-          check.classList.add('event-check--checked');
-          check.textContent = '✓';
-        }
-        check.type = 'button';
-        check.addEventListener('click', (evt) => {
-          evt.stopPropagation();
-          toggleEventCompletion(key, event.id);
-        });
-
-        const time = document.createElement('span');
-        time.className = 'day-view__event-time';
-        time.textContent = `${formatTime(event.startMinutes)}~${formatTime(event.endMinutes)}`;
-
-        const labelText = document.createElement('span');
-        labelText.textContent = event.label;
-
-        const textWrapper = document.createElement('div');
-        textWrapper.className = 'day-view__event-text';
-        textWrapper.append(time, labelText);
-
-        block.append(check, textWrapper);
-        blockContainer.appendChild(block);
-      }
-    });
-
-    hourEl.append(labelEl, blockContainer);
-    DOM.dayHours.appendChild(hourEl);
-  });
 }
 
 function toggleEventCompletion(dateKey, eventId) {
@@ -456,12 +351,13 @@ function renderTaskList() {
   Object.keys(state.events).forEach((key) => {
     state.events[key].forEach((event) => {
       if (typeof event.completed !== 'boolean') event.completed = false;
+      if (event.completed) return;
       entries.push({
         dateKey: key,
         startMinutes: event.startMinutes,
         label: event.label,
         id: event.id,
-        completed: event.completed,
+        completed: false,
       });
     });
   });
@@ -486,14 +382,8 @@ function renderTaskList() {
   entries.forEach((entry) => {
     const item = document.createElement('div');
     item.className = 'task-panel__item';
-    if (entry.completed) item.classList.add('task-panel__item--completed');
-
     const check = document.createElement('button');
     check.className = 'task-panel__check';
-    if (entry.completed) {
-      check.classList.add('task-panel__check--checked');
-      check.textContent = '✓';
-    }
     check.type = 'button';
     check.addEventListener('click', (evt) => {
       evt.stopPropagation();
@@ -515,35 +405,6 @@ function renderTaskList() {
     item.append(check, textWrapper);
     DOM.taskList.appendChild(item);
   });
-}
-
-async function handleDayFormSubmit(event) {
-  event.preventDefault();
-  if (!DOM.dayStart || !DOM.dayEnd || !DOM.dayLabel) return;
-  if (!state.selectedDate) {
-    alert('請先在 Calendar Panel 選擇日期');
-    return;
-  }
-  const startMinutes = Number(DOM.dayStart.value);
-  const endMinutes = Number(DOM.dayEnd.value);
-  const label = DOM.dayLabel.value.trim();
-
-  if (Number.isNaN(startMinutes) || Number.isNaN(endMinutes)) return;
-  if (startMinutes >= endMinutes) {
-    alert('結束時間必須晚於開始時間');
-    return;
-  }
-  if (!label) {
-    alert('請輸入行程名稱');
-    return;
-  }
-
-  await addEventAndReveal(new Date(state.selectedDate), {
-    startMinutes,
-    endMinutes,
-    label,
-  });
-  DOM.dayLabel.value = '';
 }
 
 async function handleQuickFormSubmit(event) {
@@ -612,11 +473,8 @@ function render() {
     dayElement.addEventListener('click', () => handleDaySelection(date, outside));
     DOM.days.appendChild(dayElement);
   });
-
-  renderDayView();
 }
 
-populateTimeSelects(DOM.dayStart, DOM.dayEnd);
 populateTimeSelects(DOM.calendarStart, DOM.calendarEnd);
 syncQuickFormDate();
 
@@ -628,10 +486,6 @@ DOM.buttons.forEach((button) => {
     if (action === 'today') goToToday();
   });
 });
-
-if (DOM.dayForm) {
-  DOM.dayForm.addEventListener('submit', handleDayFormSubmit);
-}
 
 if (DOM.calendarForm) {
   DOM.calendarForm.addEventListener('submit', handleQuickFormSubmit);
