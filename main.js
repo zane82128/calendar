@@ -662,5 +662,11 @@ onAuthStateChanged(auth, (user) => {
   startEventListener(user);
 });
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+
 setView(new Date());
 renderTaskList();
