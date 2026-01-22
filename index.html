@@ -83,6 +83,16 @@
           </div>
         </form>
       </section>
+      <section class="day-view" aria-live="polite" hidden>
+        <header class="day-view__header">
+          <p class="day-view__label">Selected date</p>
+          <h2 id="selected-date"></h2>
+          <p id="selected-weekday" class="day-view__weekday"></p>
+        </header>
+        <div class="day-view__hours" id="day-hours" role="list">
+          <!-- Hours will be populated by JS -->
+        </div>
+      </section>
       <section class="task-panel" id="task-panel" hidden aria-live="polite">
         <header class="task-panel__header">
           <p class="task-panel__title">Task List</p>
