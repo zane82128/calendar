@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calendar-pwa-v1';
+const CACHE_NAME = 'calendar-pwa-v2';
 const PRECACHE_URLS = [
   './',
   './index.html',
