@@ -64,6 +64,7 @@ const DOM = {
   authLogin: document.getElementById('auth-login'),
   authLogout: document.getElementById('auth-logout'),
   userName: document.getElementById('user-name'),
+  installBtn: document.getElementById('install-btn'),
   authGate: document.getElementById('auth-gate'),
   appRoot: document.getElementById('app-root'),
   taskToggle: document.getElementById('task-toggle'),
@@ -84,6 +85,7 @@ const state = {
 
 let eventCounter = 0;
 let unsubscribeEvents = null;
+let deferredInstallPrompt = null;
 
 function setAuthUI(user) {
   if (!DOM.userName || !DOM.authLogin || !DOM.authLogout || !DOM.authGate || !DOM.appRoot) return;
@@ -655,6 +657,31 @@ if (DOM.authLogout) {
     await signOut(auth);
   });
 }
+
+if (DOM.installBtn) {
+  DOM.installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    DOM.installBtn.hidden = true;
+  });
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (DOM.installBtn) {
+    DOM.installBtn.hidden = false;
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  if (DOM.installBtn) {
+    DOM.installBtn.hidden = true;
+  }
+});
 
 onAuthStateChanged(auth, (user) => {
   state.currentUser = user;

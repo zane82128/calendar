@@ -59,6 +59,11 @@ body {
   padding-inline: 1.5rem;
 }
 
+.auth-gate__install {
+  background: transparent;
+  border: 1px solid rgba(37, 99, 235, 0.4);
+}
+
 .app {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
