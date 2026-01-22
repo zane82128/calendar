@@ -86,6 +86,8 @@ const state = {
 let eventCounter = 0;
 let unsubscribeEvents = null;
 let deferredInstallPrompt = null;
+let isAppInstalled = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;
 
 function setAuthUI(user) {
   if (!DOM.userName || !DOM.authLogin || !DOM.authLogout || !DOM.authGate || !DOM.appRoot) return;
@@ -121,7 +123,7 @@ function changeMonth(delta) {
 
 function goToToday() {
   const now = new Date();
-  setView(now);
+  focusDate(now);
 }
 
 function buildCalendarDates(baseDate) {
@@ -660,6 +662,10 @@ if (DOM.authLogout) {
 
 if (DOM.installBtn) {
   DOM.installBtn.addEventListener('click', async () => {
+    if (isAppInstalled) {
+      alert('You already installed this app.');
+      return;
+    }
     if (!deferredInstallPrompt) {
       alert('目前瀏覽器未提供安裝提示，請稍後再試或使用瀏覽器的「安裝應用程式」選單。');
       return;
@@ -680,6 +686,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
 });
 
 window.addEventListener('appinstalled', () => {
+  isAppInstalled = true;
   deferredInstallPrompt = null;
   if (DOM.installBtn) {
     DOM.installBtn.disabled = true;
