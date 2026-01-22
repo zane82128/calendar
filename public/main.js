@@ -43,7 +43,6 @@ const fullDateFormatter = new Intl.DateTimeFormat('en', {
 const weekdayFormatter = new Intl.DateTimeFormat('en', { weekday: 'long' });
 const TIME_STEP_MINUTES = 30;
 const HOUR_MINUTES = Array.from({ length: 24 }, (_, hour) => hour * 60);
-
 const DOM = {
   month: document.getElementById('calendar-month'),
   year: document.getElementById('calendar-year'),
@@ -52,10 +51,6 @@ const DOM = {
   selectedDate: document.getElementById('selected-date'),
   selectedWeekday: document.getElementById('selected-weekday'),
   dayHours: document.getElementById('day-hours'),
-  dayForm: document.getElementById('day-form'),
-  dayStart: document.getElementById('day-start'),
-  dayEnd: document.getElementById('day-end'),
-  dayLabel: document.getElementById('day-label'),
   calendarForm: document.getElementById('calendar-form'),
   calendarDate: document.getElementById('calendar-date'),
   calendarStart: document.getElementById('calendar-start'),
@@ -209,13 +204,11 @@ function handleDaySelection(date, outside) {
     focusDate(date);
     return;
   }
-
   if (state.dayViewVisible && state.selectedDate && isSameDay(date, state.selectedDate)) {
     hideDayView();
     renderDayView();
     return;
   }
-
   setSelectedDate(date);
 }
 
@@ -375,6 +368,8 @@ async function addEventAndReveal(date, event) {
 function renderDayView() {
   if (!state.selectedDate || !state.dayViewVisible) return;
   if (DOM.dayView?.hasAttribute('hidden')) return;
+  if (!DOM.selectedDate || !DOM.selectedWeekday || !DOM.dayHours) return;
+
   DOM.selectedDate.textContent = fullDateFormatter.format(state.selectedDate);
   DOM.selectedWeekday.textContent = weekdayFormatter.format(state.selectedDate);
 
@@ -456,12 +451,13 @@ function renderTaskList() {
   Object.keys(state.events).forEach((key) => {
     state.events[key].forEach((event) => {
       if (typeof event.completed !== 'boolean') event.completed = false;
+      if (event.completed) return;
       entries.push({
         dateKey: key,
         startMinutes: event.startMinutes,
         label: event.label,
         id: event.id,
-        completed: event.completed,
+        completed: false,
       });
     });
   });
@@ -486,14 +482,8 @@ function renderTaskList() {
   entries.forEach((entry) => {
     const item = document.createElement('div');
     item.className = 'task-panel__item';
-    if (entry.completed) item.classList.add('task-panel__item--completed');
-
     const check = document.createElement('button');
     check.className = 'task-panel__check';
-    if (entry.completed) {
-      check.classList.add('task-panel__check--checked');
-      check.textContent = '✓';
-    }
     check.type = 'button';
     check.addEventListener('click', (evt) => {
       evt.stopPropagation();
@@ -515,35 +505,6 @@ function renderTaskList() {
     item.append(check, textWrapper);
     DOM.taskList.appendChild(item);
   });
-}
-
-async function handleDayFormSubmit(event) {
-  event.preventDefault();
-  if (!DOM.dayStart || !DOM.dayEnd || !DOM.dayLabel) return;
-  if (!state.selectedDate) {
-    alert('請先在 Calendar Panel 選擇日期');
-    return;
-  }
-  const startMinutes = Number(DOM.dayStart.value);
-  const endMinutes = Number(DOM.dayEnd.value);
-  const label = DOM.dayLabel.value.trim();
-
-  if (Number.isNaN(startMinutes) || Number.isNaN(endMinutes)) return;
-  if (startMinutes >= endMinutes) {
-    alert('結束時間必須晚於開始時間');
-    return;
-  }
-  if (!label) {
-    alert('請輸入行程名稱');
-    return;
-  }
-
-  await addEventAndReveal(new Date(state.selectedDate), {
-    startMinutes,
-    endMinutes,
-    label,
-  });
-  DOM.dayLabel.value = '';
 }
 
 async function handleQuickFormSubmit(event) {
@@ -616,7 +577,6 @@ function render() {
   renderDayView();
 }
 
-populateTimeSelects(DOM.dayStart, DOM.dayEnd);
 populateTimeSelects(DOM.calendarStart, DOM.calendarEnd);
 syncQuickFormDate();
 
@@ -628,10 +588,6 @@ DOM.buttons.forEach((button) => {
     if (action === 'today') goToToday();
   });
 });
-
-if (DOM.dayForm) {
-  DOM.dayForm.addEventListener('submit', handleDayFormSubmit);
-}
 
 if (DOM.calendarForm) {
   DOM.calendarForm.addEventListener('submit', handleQuickFormSubmit);
