@@ -30,12 +30,14 @@
             </div>
             <button class="calendar__btn" data-action="next" aria-label="Next month">&#8250;</button>
           </div>
-          <div class="auth">
-            <span class="auth__name" id="user-name">Guest</span>
-            <button class="calendar__btn" type="button" id="auth-logout" hidden>Sign out</button>
+          <div class="calendar__actions">
+            <div class="auth">
+              <span class="auth__name" id="user-name">Guest</span>
+              <button class="calendar__btn" type="button" id="auth-logout" hidden>Sign out</button>
+            </div>
+            <button class="calendar__btn calendar__btn--today" data-action="today">Today</button>
+            <button class="calendar__btn calendar__btn--task" type="button" id="task-toggle">Task List</button>
           </div>
-          <button class="calendar__btn calendar__btn--today" data-action="today">Today</button>
-          <button class="calendar__btn calendar__btn--task" type="button" id="task-toggle">Task List</button>
         </header>
         <div class="calendar__grid">
           <div class="calendar__weekdays" aria-hidden="true">
