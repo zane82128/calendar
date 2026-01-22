@@ -10,6 +10,7 @@ import {
   addDoc,
   collection,
   doc,
+  deleteDoc,
   getFirestore,
   onSnapshot,
   query,
@@ -442,7 +443,11 @@ function toggleEventCompletion(dateKey, eventId) {
   const target = events.find((event) => event.id === eventId);
   if (!target) return;
   if (!state.currentUser) return;
-  updateDoc(doc(db, 'events', eventId), { completed: !target.completed });
+  if (target.completed) {
+    updateDoc(doc(db, 'events', eventId), { completed: false });
+    return;
+  }
+  deleteDoc(doc(db, 'events', eventId));
 }
 
 function renderTaskList() {
