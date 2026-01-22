@@ -1,6 +1,6 @@
 {
-  "name": "Simple Calendar",
-  "short_name": "Simple Calendar",
+  "name": "Just a Calendar",
+  "short_name": "Just a Calendar",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0f172a",

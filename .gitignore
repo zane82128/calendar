@@ -67,3 +67,20 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+# Android signing keys
+android.keystore
+*.jks
+*.keystore
+
+# Android build artifacts
+*.apk
+*.aab
+*.idsig
+app-release-*
+build/
+.gradle/
+app/
+
+# Bubblewrap / TWA artifacts
+manifest-checksum.txt
+twa-manifest.json

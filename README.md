@@ -1,10 +1,11 @@
 # Calendar Prototype
 
-一個使用原生 HTML/CSS/JavaScript 打造的行事曆原型。提供 Google 登入、雲端同步、可互動的月份視圖，以及日檢視時段行程，適合延伸成完整的代辦或行程工具。
+一個使用原生 HTML/CSS/JavaScript 打造的行事曆原型。提供 Google 登入、雲端同步、PWA 安裝、可互動的月份視圖與日檢視時段行程，適合延伸成完整的代辦或行程工具。
 
 ## 功能特色
 
 - **登入門檻（Auth Gate）**：開啟網頁先進入 Sign in 頁面，使用 Google 登入後才會進入行事曆主畫面。
+- **PWA 安裝**：登入頁提供 Install App 按鈕，若瀏覽器支援安裝提示可直接觸發安裝。
 - **Calendar Panel（月曆面板）**：顯示 6x7 的月份格與 Sun~Sat 標題，可使用上一月 / 下一月 / Today 按鈕切換。點任何日期會自動選取，並展開右側面板。
 - **Quick Entry Form（快速輸入表單）**：位在 Calendar Panel 底部，使用日期選擇器與開始/結束時間選單，快速對任意日期建立行程並瞬間切換至對應日期。
 - **Day View Panel（日檢視面板）**：顯示被選日期、星期文字、Day Form 與 24 小時時段清單。只有在點選日期後才會出現。
@@ -20,6 +21,9 @@
 index.html   # 主要頁面與面板結構
 styles.css   # 介面排版、顏色與互動樣式
 main.js      # 月曆生成、選取狀態、行程解析/渲染邏輯
+manifest.json # PWA 設定
+sw.js        # Service Worker（快取）
+icons/       # App 圖示
 ```
 
 ## 元件 / 名詞定義
@@ -34,6 +38,7 @@ main.js      # 月曆生成、選取狀態、行程解析/渲染邏輯
 | **Task List Panel** | 由「Task List」按鈕開啟的面板 (`task-panel`)，列出所有行程的日期＋標題摘要。 |
 | **Hour Blocks** | Day View Panel 中每小時的容器（`day-view__hour`），包含時間標籤與行程色塊。 |
 | **Event Block** | 顯示在 Hour Blocks 內的行程色塊（`day-view__event`），會標註開始/結束時間與標題，支援重疊堆疊與完成勾選。 |
+| **Install App Button** | Auth Gate 內的安裝按鈕 (`install-btn`)，用於手動觸發 PWA 安裝流程。 |
 
 ## 開發 / 部署
 
@@ -54,6 +59,12 @@ main.js      # 月曆生成、選取狀態、行程解析/渲染邏輯
 - 登入：Google Sign-in（Firebase Authentication）。
 - 資料：Cloud Firestore（以 `events` 集合儲存，每筆包含 `userId/dateKey/startMinutes/endMinutes/label/completed`）。
 - 權限：需在 Authentication 啟用 Google，並將 `calendar-c745b.web.app` 加入 Authorized domains。
+
+## PWA / 快取
+
+- `manifest.json` 定義名稱、顏色與圖示。
+- `sw.js` 負責快取並支援離線開啟。
+- 使用版本參數（例如 `styles.css?v=20260121`）與 `CACHE_NAME` 版本來避免舊快取問題。
 
 ## 待辦想法
 
