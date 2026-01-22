@@ -660,11 +660,14 @@ if (DOM.authLogout) {
 
 if (DOM.installBtn) {
   DOM.installBtn.addEventListener('click', async () => {
-    if (!deferredInstallPrompt) return;
+    if (!deferredInstallPrompt) {
+      alert('目前瀏覽器未提供安裝提示，請稍後再試或使用瀏覽器的「安裝應用程式」選單。');
+      return;
+    }
     deferredInstallPrompt.prompt();
     await deferredInstallPrompt.userChoice;
     deferredInstallPrompt = null;
-    DOM.installBtn.hidden = true;
+    DOM.installBtn.disabled = true;
   });
 }
 
@@ -672,14 +675,14 @@ window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   deferredInstallPrompt = event;
   if (DOM.installBtn) {
-    DOM.installBtn.hidden = false;
+    DOM.installBtn.disabled = false;
   }
 });
 
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   if (DOM.installBtn) {
-    DOM.installBtn.hidden = true;
+    DOM.installBtn.disabled = true;
   }
 });
 
