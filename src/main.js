@@ -44,6 +44,14 @@ const fullDateFormatter = new Intl.DateTimeFormat('en', {
 const weekdayFormatter = new Intl.DateTimeFormat('en', { weekday: 'long' });
 const TIME_STEP_MINUTES = 30;
 const HOUR_MINUTES = Array.from({ length: 24 }, (_, hour) => hour * 60);
+const EVENT_COLORS = [
+  { label: 'Blue', value: '#2563eb' },
+  { label: 'Orange', value: '#f59e0b' },
+  { label: 'Green', value: '#16a34a' },
+  { label: 'Purple', value: '#7c3aed' },
+  { label: 'Rose', value: '#e11d48' },
+];
+const DEFAULT_EVENT_COLOR = EVENT_COLORS[0].value;
 const DOM = {
   month: document.getElementById('calendar-month'),
   year: document.getElementById('calendar-year'),
@@ -56,26 +64,31 @@ const DOM = {
   calendarDate: document.getElementById('calendar-date'),
   calendarStart: document.getElementById('calendar-start'),
   calendarEnd: document.getElementById('calendar-end'),
+  calendarColor: document.getElementById('calendar-color'),
   calendarLabel: document.getElementById('calendar-label'),
   authLogin: document.getElementById('auth-login'),
   authLogout: document.getElementById('auth-logout'),
   userName: document.getElementById('user-name'),
+  settingsUser: document.getElementById('settings-user'),
+  settingsLogout: document.getElementById('settings-logout'),
   installBtn: document.getElementById('install-btn'),
   authGate: document.getElementById('auth-gate'),
   appRoot: document.getElementById('app-root'),
   taskToggle: document.getElementById('task-toggle'),
-  taskPanel: document.getElementById('task-panel'),
   taskList: document.getElementById('task-list'),
-  taskClose: document.getElementById('task-close'),
   dayView: document.querySelector('.day-view'),
+  monthlyTitle: document.getElementById('monthly-title'),
+  monthlyDays: document.getElementById('monthly-days'),
+  monthlyToday: document.getElementById('monthly-today'),
+  pages: document.querySelectorAll('.page'),
+  navItems: document.querySelectorAll('.bottom-nav__item'),
 };
 
 const state = {
   viewDate: new Date(),
   selectedDate: new Date(),
   events: {},
-  dayViewVisible: false,
-  taskPanelVisible: false,
+  activePage: 'home',
   currentUser: null,
 };
 
@@ -90,11 +103,16 @@ function setAuthUI(user) {
   if (!DOM.userName || !DOM.authLogin || !DOM.authLogout || !DOM.authGate || !DOM.appRoot) return;
   if (user) {
     DOM.userName.textContent = user.displayName || user.email || 'Logged in';
+    if (DOM.settingsUser) {
+      DOM.settingsUser.textContent = user.displayName || user.email || 'Logged in';
+    }
     DOM.authGate.hidden = true;
     DOM.appRoot.classList.remove('app--hidden');
     DOM.authLogout.hidden = false;
+    setActivePage('home');
   } else {
     DOM.userName.textContent = 'Guest';
+    if (DOM.settingsUser) DOM.settingsUser.textContent = 'Guest';
     DOM.authGate.hidden = false;
     DOM.appRoot.classList.add('app--hidden');
     DOM.authLogout.hidden = true;
@@ -121,6 +139,7 @@ function changeMonth(delta) {
 function goToToday() {
   const now = new Date();
   focusDate(now);
+  setActivePage('today');
 }
 
 function buildCalendarDates(baseDate) {
@@ -162,30 +181,26 @@ function isSameMonth(dateA, dateB) {
   return dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth();
 }
 
-function showDayView() {
-  state.dayViewVisible = true;
-  DOM.dayView?.removeAttribute('hidden');
-}
+function setActivePage(page) {
+  state.activePage = page;
+  DOM.pages.forEach((section) => {
+    section.classList.toggle('page--active', section.dataset.page === page);
+  });
+  DOM.navItems.forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.page === page);
+  });
 
-function hideDayView() {
-  state.dayViewVisible = false;
-  DOM.dayView?.setAttribute('hidden', '');
-}
-
-function showTaskPanel() {
-  state.taskPanelVisible = true;
-  DOM.taskPanel?.removeAttribute('hidden');
-  renderTaskList();
-}
-
-function hideTaskPanel() {
-  state.taskPanelVisible = false;
-  DOM.taskPanel?.setAttribute('hidden', '');
-}
-
-function toggleTaskPanel() {
-  if (state.taskPanelVisible) hideTaskPanel();
-  else showTaskPanel();
+  if (page === 'today') {
+    const today = new Date();
+    focusDate(today, { reRender: false });
+    renderDayView();
+  }
+  if (page === 'monthly') {
+    renderMonthlyView();
+  }
+  if (page === 'tasks') {
+    renderTaskList();
+  }
 }
 
 function focusDate(date, { reRender = true } = {}) {
@@ -196,18 +211,12 @@ function focusDate(date, { reRender = true } = {}) {
 function setSelectedDate(date, { reRender = true } = {}) {
   state.selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   syncQuickFormDate(state.selectedDate);
-  showDayView();
   if (reRender) render();
 }
 
 function handleDaySelection(date, outside) {
   if (outside) {
     focusDate(date);
-    return;
-  }
-  if (state.dayViewVisible && state.selectedDate && isSameDay(date, state.selectedDate)) {
-    hideDayView();
-    renderDayView();
     return;
   }
   setSelectedDate(date);
@@ -228,6 +237,18 @@ function populateTimeSelects(startSelect, endSelect) {
 
   startSelect.value = String(9 * 60);
   endSelect.value = String(10 * 60);
+}
+
+function populateColorSelect(select) {
+  if (!select) return;
+  select.innerHTML = '';
+  EVENT_COLORS.forEach((color) => {
+    const option = document.createElement('option');
+    option.value = color.value;
+    option.textContent = color.label;
+    select.appendChild(option);
+  });
+  select.value = DEFAULT_EVENT_COLOR;
 }
 
 function createOption(value, label) {
@@ -297,6 +318,7 @@ function startEventListener(user) {
         endMinutes: data.endMinutes,
         label: data.label,
         completed: Boolean(data.completed),
+        color: data.color || DEFAULT_EVENT_COLOR,
       });
     });
 
@@ -330,6 +352,7 @@ function normalizeEvent(event) {
     endMinutes: event.endMinutes,
     label: event.label,
     completed: Boolean(event.completed),
+    color: event.color || DEFAULT_EVENT_COLOR,
   };
 }
 
@@ -356,19 +379,19 @@ async function addEventAndReveal(date, event) {
     endMinutes: event.endMinutes,
     label: event.label,
     completed: Boolean(event.completed),
+    color: event.color || DEFAULT_EVENT_COLOR,
     createdAt: serverTimestamp(),
   });
   if (!state.selectedDate || !isSameDay(date, state.selectedDate)) {
     focusDate(date);
     return;
   }
-  showDayView();
   renderDayView();
 }
 
 function renderDayView() {
-  if (!state.selectedDate || !state.dayViewVisible) return;
-  if (DOM.dayView?.hasAttribute('hidden')) return;
+  if (!state.selectedDate) return;
+  if (state.activePage !== 'today') return;
   if (!DOM.selectedDate || !DOM.selectedWeekday || !DOM.dayHours) return;
 
   DOM.selectedDate.textContent = fullDateFormatter.format(state.selectedDate);
@@ -396,6 +419,8 @@ function renderDayView() {
         const block = document.createElement('div');
         block.className = 'day-view__event';
         if (event.completed) block.classList.add('day-view__event--completed');
+        const eventColor = event.color || DEFAULT_EVENT_COLOR;
+        block.style.setProperty('--event-color', eventColor);
         const durationHours = (event.endMinutes - event.startMinutes) / 60;
         block.style.setProperty('--duration', Math.max(durationHours, TIME_STEP_MINUTES / 60));
         const offsetRatio = (event.startMinutes % 60) / 60;
@@ -434,6 +459,48 @@ function renderDayView() {
 
     hourEl.append(labelEl, blockContainer);
     DOM.dayHours.appendChild(hourEl);
+  });
+}
+
+function renderMonthlyView() {
+  if (!DOM.monthlyDays || !DOM.monthlyTitle) return;
+  const title = `${monthFormatter.format(state.viewDate)} ${state.viewDate.getFullYear()}`;
+  DOM.monthlyTitle.textContent = title;
+  DOM.monthlyDays.innerHTML = '';
+
+  const days = buildCalendarDates(state.viewDate);
+  days.forEach(({ date, outside }) => {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'monthly-day';
+    if (outside) dayEl.classList.add('monthly-day--outside');
+
+    const number = document.createElement('span');
+    number.className = 'monthly-day__number';
+    number.textContent = date.getDate();
+
+    const eventsWrap = document.createElement('div');
+    eventsWrap.className = 'monthly-day__events';
+    const dateKey = getDateKey(date);
+    const events = state.events[dateKey] ?? [];
+    const visibleEvents = events.slice(0, 3);
+
+    visibleEvents.forEach((event) => {
+      const item = document.createElement('div');
+      item.className = 'monthly-event';
+      item.style.setProperty('--event-color', event.color || DEFAULT_EVENT_COLOR);
+      item.textContent = event.label;
+      eventsWrap.appendChild(item);
+    });
+
+    if (events.length > 3) {
+      const more = document.createElement('span');
+      more.className = 'monthly-day__more';
+      more.textContent = `+${events.length - 3} more`;
+      eventsWrap.appendChild(more);
+    }
+
+    dayEl.append(number, eventsWrap);
+    DOM.monthlyDays.appendChild(dayEl);
   });
 }
 
@@ -518,6 +585,7 @@ async function handleQuickFormSubmit(event) {
   const dateValue = DOM.calendarDate.value;
   const startMinutes = Number(DOM.calendarStart.value);
   const endMinutes = Number(DOM.calendarEnd.value);
+  const color = DOM.calendarColor?.value || DEFAULT_EVENT_COLOR;
   const label = DOM.calendarLabel.value.trim();
 
   if (!dateValue) {
@@ -543,6 +611,7 @@ async function handleQuickFormSubmit(event) {
     startMinutes,
     endMinutes,
     label,
+    color,
   });
   DOM.calendarLabel.value = '';
 }
@@ -580,9 +649,13 @@ function render() {
   });
 
   renderDayView();
+  if (state.activePage === 'monthly') {
+    renderMonthlyView();
+  }
 }
 
 populateTimeSelects(DOM.calendarStart, DOM.calendarEnd);
+populateColorSelect(DOM.calendarColor);
 syncQuickFormDate();
 
 DOM.buttons.forEach((button) => {
@@ -591,6 +664,7 @@ DOM.buttons.forEach((button) => {
     if (action === 'prev') changeMonth(-1);
     if (action === 'next') changeMonth(1);
     if (action === 'today') goToToday();
+    if (action === 'preview') setActivePage('monthly');
   });
 });
 
@@ -599,12 +673,23 @@ if (DOM.calendarForm) {
 }
 
 if (DOM.taskToggle) {
-  DOM.taskToggle.addEventListener('click', toggleTaskPanel);
+  DOM.taskToggle.addEventListener('click', () => setActivePage('tasks'));
 }
 
-if (DOM.taskClose) {
-  DOM.taskClose.addEventListener('click', hideTaskPanel);
+if (DOM.monthlyToday) {
+  DOM.monthlyToday.addEventListener('click', () => {
+    const now = new Date();
+    focusDate(now);
+    renderMonthlyView();
+  });
 }
+
+DOM.navItems.forEach((button) => {
+  button.addEventListener('click', () => {
+    const target = button.dataset.page;
+    if (target) setActivePage(target);
+  });
+});
 
 if (DOM.authLogin) {
   DOM.authLogin.addEventListener('click', async () => {
@@ -618,6 +703,12 @@ if (DOM.authLogin) {
 
 if (DOM.authLogout) {
   DOM.authLogout.addEventListener('click', async () => {
+    await signOut(auth);
+  });
+}
+
+if (DOM.settingsLogout) {
+  DOM.settingsLogout.addEventListener('click', async () => {
     await signOut(auth);
   });
 }

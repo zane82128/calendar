@@ -6,24 +6,34 @@
 
 - **登入門檻（Auth Gate）**：開啟網頁先進入 Sign in 頁面，使用 Google 登入後才會進入行事曆主畫面。
 - **PWA 安裝**：登入頁提供 Install App 按鈕，若瀏覽器支援安裝提示可直接觸發安裝。
-- **Calendar Panel（月曆面板）**：顯示 6x7 的月份格與 Sun~Sat 標題，可使用上一月 / 下一月 / Today 按鈕切換。點任何日期會自動選取，並展開右側面板。
-- **Quick Entry Form（快速輸入表單）**：位在 Calendar Panel 底部，使用日期選擇器與開始/結束時間選單，快速對任意日期建立行程並瞬間切換至對應日期。
-- **Day View Panel（日檢視面板）**：顯示被選日期、星期文字、Day Form 與 24 小時時段清單。只有在點選日期後才會出現。
-- **Day Form（日檢視表單）**：於 Day View 內用選單挑開始/結束時間並輸入標題，針對目前選定日期快速建立行程。
-- **Task List Panel（行程清單面板）**：由「Task List」按鈕開啟的面板，列出所有行程的日期＋標題摘要，與行程狀態同步。
-- **行程渲染**：採 30 分鐘解析度定位、僅顯示整點標籤；事件可重疊堆疊，短行程在上方，完成後淡出消失。
+- **全螢幕版面**：主要面板改為全寬配置，減少四周留白。
+- **底部分頁**：Home / Monthly / Tasks / Today / Settings 分頁切換。
+- **Calendar Panel（月曆面板）**：顯示 6x7 的月份格與 Sun~Sat 標題，可使用上一月 / 下一月 / Today / Preview 按鈕切換。
+- **Quick Entry Form（快速輸入表單）**：位在 Calendar Panel 底部，使用日期選擇器、開始/結束時間與顏色選單快速建立行程。
+- **Day View Panel（日檢視面板）**：在 Today 分頁顯示當日 24 小時時段清單。
+- **Monthly Preview（日程表預覽）**：以月份視圖呈現行程摘要。
+- **Task List Panel（行程清單面板）**：在 Tasks 分頁列出所有行程的日期＋標題摘要。
+- **行程完成**：勾選完成會直接刪除雲端事件。
+- **行程渲染**：採 30 分鐘解析度定位、僅顯示整點標籤；事件可重疊堆疊，短行程在上方。
 - **跨月選取**：即使在月曆中點擊前後月的灰色日期，也會自動切換月份並顯示該日期的行程。
 - **淺/深色外觀**：基於 `prefers-color-scheme` 自動切換，維持視覺一致的卡片式 UI。
 
 ## 專案結構
 
 ```
-index.html   # 主要頁面與面板結構
-styles.css   # 介面排版、顏色與互動樣式
-main.js      # 月曆生成、選取狀態、行程解析/渲染邏輯
-manifest.json # PWA 設定
-sw.js        # Service Worker（快取）
-icons/       # App 圖示
+src/                 # 前端原始碼
+  index.html         # 主要頁面與面板結構
+  styles.css         # 介面排版、顏色與互動樣式
+  main.js            # 月曆生成、選取狀態、行程解析/渲染邏輯
+  manifest.json      # PWA 設定
+  sw.js              # Service Worker（快取）
+  icons/             # App 圖示
+public/              # Firebase Hosting 發佈目錄
+hosting/             # 站點資源（404、asset links）
+docs/                # 開發日誌與常見問題
+assets/              # 圖片與品牌素材
+android/             # TWA / Android 專案
+tools/               # 維護腳本
 ```
 
 ## 元件 / 名詞定義
@@ -31,11 +41,13 @@ icons/       # App 圖示
 | 名稱 | 說明 |
 | --- | --- |
 | **Auth Gate** | 登入入口畫面 (`auth-gate`)，未登入時只顯示 Sign in 卡片。 |
-| **Calendar Panel** | 左側月曆面板，包括標題、月份導航、Sun~Sat 標頭與 6x7 日期按鈕。登入後才會顯示。 |
-| **Quick Entry Form** | Calendar Panel 底部的表單 (`calendar-form`)，使用日期欄位與開始/結束時間選單，適合跨日新增行程。 |
-| **Day View Panel** | 右側日檢視面板，顯示「Selected date」、Day Form 與 24 小時時段清單。選取日期後才會顯示。 |
-| **Day Form** | Day View Panel 內的表單 (`day-form`)，以選單選取開始/結束時間並輸入標題，快速新增當天行程。 |
-| **Task List Panel** | 由「Task List」按鈕開啟的面板 (`task-panel`)，列出所有行程的日期＋標題摘要。 |
+| **Calendar Panel** | Home 分頁的月曆面板，包括標題、月份導航、Sun~Sat 標頭與 6x7 日期按鈕。 |
+| **Quick Entry Form** | Calendar Panel 底部的表單 (`calendar-form`)，使用日期、開始/結束時間與顏色選單新增行程。 |
+| **Monthly Preview** | Monthly 分頁的月份總覽 (`monthly-days`)，顯示每一天的行程摘要。 |
+| **Day View Panel** | Today 分頁的日檢視面板，顯示「Selected date」與 24 小時時段清單。 |
+| **Task List Panel** | Tasks 分頁的面板 (`task-list`)，列出所有行程的日期＋標題摘要。 |
+| **Settings Panel** | Settings 分頁，顯示使用者資訊並提供 Sign out。 |
+| **Bottom Nav** | 底部分頁導覽列 (`bottom-nav`)。 |
 | **Hour Blocks** | Day View Panel 中每小時的容器（`day-view__hour`），包含時間標籤與行程色塊。 |
 | **Event Block** | 顯示在 Hour Blocks 內的行程色塊（`day-view__event`），會標註開始/結束時間與標題，支援重疊堆疊與完成勾選。 |
 | **Install App Button** | Auth Gate 內的安裝按鈕 (`install-btn`)，用於手動觸發 PWA 安裝流程。 |
@@ -45,19 +57,21 @@ icons/       # App 圖示
 1. 安裝相依：本專案純靜態頁面，不需額外套件。
 2. 本地預覽：
    ```bash
-   cd /path/to/calendar
+   cd /path/to/calendar/src
    python -m http.server 5173
    # 或 `npx serve`
    ```
    之後瀏覽 `http://localhost:5173`。
+   若要模擬實際 Hosting 輸出，改在 `public/` 目錄啟動。
 3. 部署：
    - Firebase Hosting：`firebase deploy` 後可透過 `https://calendar-c745b.web.app` 使用。
    - GitHub Pages（可選）：啟用 Pages（Source 選 main / root）即可透過 `https://<username>.github.io/calendar/` 取用。
+   - 部署前請先同步：`src/` 與 `hosting/` 內容複製到 `public/`。
 
 ## Firebase 整合
 
 - 登入：Google Sign-in（Firebase Authentication）。
-- 資料：Cloud Firestore（以 `events` 集合儲存，每筆包含 `userId/dateKey/startMinutes/endMinutes/label/completed`）。
+- 資料：Cloud Firestore（以 `events` 集合儲存，每筆包含 `userId/dateKey/startMinutes/endMinutes/label/color/completed`）。
 - 權限：需在 Authentication 啟用 Google，並將 `calendar-c745b.web.app` 加入 Authorized domains。
 
 ## PWA / 快取
@@ -65,6 +79,11 @@ icons/       # App 圖示
 - `manifest.json` 定義名稱、顏色與圖示。
 - `sw.js` 負責快取並支援離線開啟。
 - 使用版本參數（例如 `styles.css?v=20260121`）與 `CACHE_NAME` 版本來避免舊快取問題。
+
+## 文件
+
+- 開發日誌：`docs/DEVELOPMENT_LOG.md`
+- 常見問題：`docs/PROJECT_FAQ.md`
 
 ## 待辦想法
 
