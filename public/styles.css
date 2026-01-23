@@ -115,14 +115,6 @@ body {
   gap: 1rem;
 }
 
-.calendar__actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
 .calendar__nav {
   display: flex;
   align-items: center;
@@ -135,6 +127,11 @@ body {
   justify-content: flex-end;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.calendar__meta {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .auth__name {
@@ -180,17 +177,6 @@ body {
   padding-inline: 1rem;
 }
 
-.calendar__btn--preview {
-  background: transparent;
-  border: 1px solid rgba(37, 99, 235, 0.4);
-  color: var(--primary);
-}
-
-.calendar__btn--task {
-  background: transparent;
-  border: 1px solid rgba(37, 99, 235, 0.4);
-  color: var(--primary);
-}
 
 .calendar__grid {
   margin-top: 1rem;
@@ -615,15 +601,29 @@ body {
   gap: 0.5rem;
 }
 
+@media (min-width: 600px) {
+  .monthly-view__days {
+    grid-auto-rows: 7.5rem;
+  }
+}
+
+@media (max-width: 599px) {
+  .monthly-view__days {
+    grid-auto-rows: 6.2rem;
+  }
+}
+
 .monthly-day {
   border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 0.85rem;
   padding: 0.5rem;
-  min-height: 6rem;
+  min-height: 6.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   background: rgba(148, 163, 184, 0.08);
+  text-align: left;
+  cursor: pointer;
 }
 
 .monthly-day--outside {
@@ -707,6 +707,13 @@ body {
   padding-inline: 1.5rem;
 }
 
+.settings__version {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
 .bottom-nav {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -747,10 +754,6 @@ body {
 }
 
 @media (max-width: 480px) {
-  .calendar__actions {
-    justify-content: flex-start;
-  }
-
   .calendar__btn {
     min-height: 2.5rem;
   }

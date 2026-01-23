@@ -6,7 +6,7 @@
     <title>Calendar Prototype</title>
     <meta name="theme-color" content="#0f172a" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="styles.css?v=20260123" />
+    <link rel="stylesheet" href="styles.css?v=20260123-4" />
   </head>
   <body>
     <section class="auth-gate" id="auth-gate">
@@ -33,14 +33,8 @@
                   </div>
                   <button class="calendar__btn" data-action="next" aria-label="Next month">&#8250;</button>
                 </div>
-                <div class="calendar__actions">
-                  <div class="auth">
-                    <span class="auth__name" id="user-name">Guest</span>
-                    <button class="calendar__btn" type="button" id="auth-logout" hidden>Sign out</button>
-                  </div>
-                  <button class="calendar__btn calendar__btn--preview" data-action="preview">Preview</button>
-                  <button class="calendar__btn calendar__btn--today" data-action="today">Today</button>
-                  <button class="calendar__btn calendar__btn--task" type="button" id="task-toggle">Task List</button>
+                <div class="calendar__meta">
+                  <span class="auth__name" id="user-name">Guest</span>
                 </div>
               </header>
               <div class="calendar__grid">
@@ -132,7 +126,7 @@
             </section>
           </div>
         </section>
-        <section class="page" data-page="today">
+        <section class="page" data-page="schedule">
           <div class="page__inner">
             <section class="day-view panel" aria-live="polite">
               <header class="day-view__header">
@@ -159,6 +153,7 @@
                   <span class="settings__value" id="settings-user">Guest</span>
                 </div>
                 <button class="calendar__btn settings__signout" type="button" id="settings-logout">Sign out</button>
+                <span class="settings__version" id="app-version"></span>
               </div>
             </section>
           </div>
@@ -168,10 +163,10 @@
         <button class="bottom-nav__item is-active" type="button" data-page="home">Home</button>
         <button class="bottom-nav__item" type="button" data-page="monthly">Monthly</button>
         <button class="bottom-nav__item" type="button" data-page="tasks">Tasks</button>
-        <button class="bottom-nav__item" type="button" data-page="today">Today</button>
+        <button class="bottom-nav__item" type="button" data-page="schedule">Schedule</button>
         <button class="bottom-nav__item" type="button" data-page="settings">Settings</button>
       </nav>
     </main>
-    <script src="main.js?v=20260123" type="module"></script>
+    <script src="main.js?v=20260123-4" type="module"></script>
   </body>
 </html>

@@ -2,8 +2,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/fireba
 import {
   getAuth,
   GoogleAuthProvider,
+  getRedirectResult,
   onAuthStateChanged,
-  signInWithPopup,
+  setPersistence,
+  browserLocalPersistence,
+  signInWithRedirect,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 import {
@@ -52,6 +55,7 @@ const EVENT_COLORS = [
   { label: 'Rose', value: '#e11d48' },
 ];
 const DEFAULT_EVENT_COLOR = EVENT_COLORS[0].value;
+const APP_VERSION = '2026.01.23.4';
 const DOM = {
   month: document.getElementById('calendar-month'),
   year: document.getElementById('calendar-year'),
@@ -71,10 +75,10 @@ const DOM = {
   userName: document.getElementById('user-name'),
   settingsUser: document.getElementById('settings-user'),
   settingsLogout: document.getElementById('settings-logout'),
+  appVersion: document.getElementById('app-version'),
   installBtn: document.getElementById('install-btn'),
   authGate: document.getElementById('auth-gate'),
   appRoot: document.getElementById('app-root'),
-  taskToggle: document.getElementById('task-toggle'),
   taskList: document.getElementById('task-list'),
   dayView: document.querySelector('.day-view'),
   monthlyTitle: document.getElementById('monthly-title'),
@@ -98,24 +102,31 @@ let deferredInstallPrompt = null;
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches
   || window.navigator.standalone === true;
 let isAppInstalled = isStandalone();
+let authRedirectInProgress = false;
+
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.warn('Auth persistence error:', error);
+});
 
 function setAuthUI(user) {
-  if (!DOM.userName || !DOM.authLogin || !DOM.authLogout || !DOM.authGate || !DOM.appRoot) return;
+  if (!DOM.userName || !DOM.authLogin || !DOM.authGate || !DOM.appRoot) return;
   if (user) {
     DOM.userName.textContent = user.displayName || user.email || 'Logged in';
     if (DOM.settingsUser) {
       DOM.settingsUser.textContent = user.displayName || user.email || 'Logged in';
     }
+    if (DOM.appVersion) DOM.appVersion.textContent = `Version ${APP_VERSION}`;
     DOM.authGate.hidden = true;
     DOM.appRoot.classList.remove('app--hidden');
-    DOM.authLogout.hidden = false;
+    if (DOM.authLogout) DOM.authLogout.hidden = false;
     setActivePage('home');
   } else {
     DOM.userName.textContent = 'Guest';
     if (DOM.settingsUser) DOM.settingsUser.textContent = 'Guest';
+    if (DOM.appVersion) DOM.appVersion.textContent = `Version ${APP_VERSION}`;
     DOM.authGate.hidden = false;
     DOM.appRoot.classList.add('app--hidden');
-    DOM.authLogout.hidden = true;
+    if (DOM.authLogout) DOM.authLogout.hidden = true;
   }
 }
 
@@ -139,7 +150,7 @@ function changeMonth(delta) {
 function goToToday() {
   const now = new Date();
   focusDate(now);
-  setActivePage('today');
+  setActivePage('schedule');
 }
 
 function buildCalendarDates(baseDate) {
@@ -193,6 +204,9 @@ function setActivePage(page) {
   if (page === 'today') {
     const today = new Date();
     focusDate(today, { reRender: false });
+    renderDayView();
+  }
+  if (page === 'schedule') {
     renderDayView();
   }
   if (page === 'monthly') {
@@ -391,7 +405,7 @@ async function addEventAndReveal(date, event) {
 
 function renderDayView() {
   if (!state.selectedDate) return;
-  if (state.activePage !== 'today') return;
+  if (state.activePage !== 'schedule') return;
   if (!DOM.selectedDate || !DOM.selectedWeekday || !DOM.dayHours) return;
 
   DOM.selectedDate.textContent = fullDateFormatter.format(state.selectedDate);
@@ -470,9 +484,10 @@ function renderMonthlyView() {
 
   const days = buildCalendarDates(state.viewDate);
   days.forEach(({ date, outside }) => {
-    const dayEl = document.createElement('div');
+    const dayEl = document.createElement('button');
     dayEl.className = 'monthly-day';
     if (outside) dayEl.classList.add('monthly-day--outside');
+    dayEl.type = 'button';
 
     const number = document.createElement('span');
     number.className = 'monthly-day__number';
@@ -500,6 +515,10 @@ function renderMonthlyView() {
     }
 
     dayEl.append(number, eventsWrap);
+    dayEl.addEventListener('click', () => {
+      focusDate(date);
+      setActivePage('schedule');
+    });
     DOM.monthlyDays.appendChild(dayEl);
   });
 }
@@ -664,16 +683,11 @@ DOM.buttons.forEach((button) => {
     if (action === 'prev') changeMonth(-1);
     if (action === 'next') changeMonth(1);
     if (action === 'today') goToToday();
-    if (action === 'preview') setActivePage('monthly');
   });
 });
 
 if (DOM.calendarForm) {
   DOM.calendarForm.addEventListener('submit', handleQuickFormSubmit);
-}
-
-if (DOM.taskToggle) {
-  DOM.taskToggle.addEventListener('click', () => setActivePage('tasks'));
 }
 
 if (DOM.monthlyToday) {
@@ -694,9 +708,11 @@ DOM.navItems.forEach((button) => {
 if (DOM.authLogin) {
   DOM.authLogin.addEventListener('click', async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      authRedirectInProgress = true;
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
-      alert('登入失敗，請稍後再試');
+      console.warn('Redirect sign-in failed:', error);
+      alert(`登入失敗：${error.code || 'unknown'}`);
     }
   });
 }
@@ -758,6 +774,15 @@ onAuthStateChanged(auth, (user) => {
   setAuthUI(user);
   startEventListener(user);
 });
+
+getRedirectResult(auth)
+  .catch((error) => {
+    console.warn('Redirect sign-in failed:', error);
+    alert(`登入失敗：${error.code || 'unknown'}`);
+  })
+  .finally(() => {
+    authRedirectInProgress = false;
+  });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
